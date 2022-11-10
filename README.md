@@ -2,10 +2,16 @@
 
 mermaid support
 does this code render
-a->B
-B-c
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
 
 ```mermaid
-a->B
-B-c
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
 ```
