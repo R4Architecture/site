@@ -44,9 +44,10 @@ jobs:
       - name: Copy specification to website
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          SOURCE_DIR="specification/$VERSION"
-          # Toekomstig: SOURCE_DIR="specification/source"
-          
+          # old SOURCE_DIR="specification/$VERSION"
+          # to use SOURCE_DIR="specification/source"
+          # now for test
+          SOURCE_DIR="source"
           # Verwijder oude versie indien aanwezig
           rm -rf "website/$VERSION"
           
