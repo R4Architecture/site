@@ -1,0 +1,61 @@
+name: Release Specification
+
+on:
+  # Trigger bij nieuwe release
+  release:
+    types: [published]
+  # Of handmatig triggeren
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version folder to release (e.g., v6)'
+        required: true
+        default: 'v6'
+
+jobs:
+  deploy-to-website:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout specification repo
+        uses: actions/checkout@v4
+        with:
+          path: specification
+
+      - name: Checkout website repo
+        uses: actions/checkout@v4
+        with:
+          repository: open-education-api/open-education-api.github.io
+          token: ${{ secrets.DEPLOY_TOKEN }}
+          path: website
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            # Extract version from release tag (e.g., v6.0.0 -> v6)
+            VERSION=$(echo "${{ github.event.release.tag_name }}" | grep -oE 'v[0-9]+')
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Copy specification to website
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          SOURCE_DIR="specification/$VERSION"
+          # Toekomstig: SOURCE_DIR="specification/source"
+          
+          # Verwijder oude versie indien aanwezig
+          rm -rf "website/$VERSION"
+          
+          # Kopieer nieuwe versie
+          cp -r "$SOURCE_DIR" "website/$VERSION"
+
+      - name: Commit and push to website
+        working-directory: website
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Release ${{ steps.version.outputs.version }} from specification repo" || exit 0
+          git push
