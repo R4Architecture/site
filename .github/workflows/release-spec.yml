@@ -24,7 +24,9 @@ jobs:
       - name: Checkout website repo
         uses: actions/checkout@v4
         with:
-          repository: open-education-api/open-education-api.github.io
+          # repo wit docuementation
+          # repository: open-education-api/open-education-api.github.io
+          repository: R4Architecture/r4architecture.github.io
           token: ${{ secrets.DEPLOY_TOKEN }}
           path: website
 
