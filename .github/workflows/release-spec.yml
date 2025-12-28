@@ -4,7 +4,8 @@ on:
   # Trigger bij nieuwe release
   release:
     types: [published]
-  # Of handmatig triggeren
+  
+  # Handmatig triggeren
   workflow_dispatch:
     inputs:
       version:
@@ -16,20 +17,33 @@ jobs:
   deploy-to-website:
     runs-on: ubuntu-latest
     steps:
+      # Stap 1: Genereer een installatie token via de GitHub App
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: open-education-api
+          repositories: |
+            specification
+            open-education-api.github.io
+
+      # Stap 2: Checkout specification repo (huidige repo)
       - name: Checkout specification repo
         uses: actions/checkout@v4
         with:
           path: specification
 
+      # Stap 3: Checkout website repo met het gegenereerde token
       - name: Checkout website repo
         uses: actions/checkout@v4
         with:
-          # repo wit docuementation
-          # repository: open-education-api/open-education-api.github.io
-          repository: R4Architecture/r4architecture.github.io
-          token: ${{ secrets.DEPLOY_TOKEN }}
+          repository: open-education-api/open-education-api.github.io
+          token: ${{ steps.app-token.outputs.token }}
           path: website
 
+      # Stap 4: Bepaal welke versie we releasen
       - name: Determine version
         id: version
         run: |
@@ -40,25 +54,54 @@ jobs:
             VERSION="${{ github.event.inputs.version }}"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Releasing version: $VERSION"
 
+      # Stap 5: Kopieer specificatie naar website repo
       - name: Copy specification to website
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          # old SOURCE_DIR="specification/$VERSION"
-          # to use SOURCE_DIR="specification/source"
-          # now for test
-          SOURCE_DIR="source"
+          SOURCE_DIR="specification/$VERSION"
+          # Toekomstig wanneer je /source gebruikt:
+          # SOURCE_DIR="specification/source"
+          
+          if [ ! -d "$SOURCE_DIR" ]; then
+            echo "❌ Error: Source directory $SOURCE_DIR does not exist"
+            exit 1
+          fi
+          
+          echo "📂 Copying from $SOURCE_DIR to website/$VERSION"
+          
           # Verwijder oude versie indien aanwezig
           rm -rf "website/$VERSION"
           
           # Kopieer nieuwe versie
           cp -r "$SOURCE_DIR" "website/$VERSION"
+          
+          echo "✅ Copy completed"
 
+      # Stap 6: Commit en push naar website repo
       - name: Commit and push to website
         working-directory: website
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "ooapi-spec-deployer[bot]"
+          git config user.email "ooapi-spec-deployer[bot]@users.noreply.github.com"
+          
           git add .
-          git commit -m "Release ${{ steps.version.outputs.version }} from specification repo" || exit 0
+          
+          # Check of er changes zijn
+          if git diff --staged --quiet; then
+            echo "ℹ️ No changes to commit"
+            exit 0
+          fi
+          
+          git commit -m "🚀 Release ${{ steps.version.outputs.version }} from specification repo
+
+          Triggered by: ${{ github.event_name }}
+          Source commit: ${{ github.sha }}
+          Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
           git push
+          
+          echo "✅ Successfully pushed to open-education-api.github.io"
