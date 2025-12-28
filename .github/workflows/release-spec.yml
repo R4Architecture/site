@@ -24,8 +24,8 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
-#          owner: R4Architecture
-          owner: open-education-api
+          owner: R4Architecture
+#          owner: open-education-api
           repositories: |
             site
             r4architecture.github.io
