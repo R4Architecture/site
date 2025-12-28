@@ -63,9 +63,9 @@ jobs:
       - name: Copy specification to website
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          SOURCE_DIR="specification/$VERSION"
+          # SOURCE_DIR="specification/$VERSION"
           # Toekomstig wanneer je /source gebruikt:
-          # SOURCE_DIR="specification/source"
+          SOURCE_DIR="site/source"
           
           if [ ! -d "$SOURCE_DIR" ]; then
             echo "❌ Error: Source directory $SOURCE_DIR does not exist"
