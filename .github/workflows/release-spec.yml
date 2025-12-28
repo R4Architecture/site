@@ -24,16 +24,19 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
+#          owner: R4Architecture
           owner: open-education-api
           repositories: |
-            specification
-            open-education-api.github.io
+            site
+            r4architecture.github.io
+#            specification
+#            open-education-api.github.io
 
       # Stap 2: Checkout specification repo (huidige repo)
       - name: Checkout specification repo
         uses: actions/checkout@v4
         with:
-          path: specification
+          path: site
 
       # Stap 3: Checkout website repo met het gegenereerde token
       - name: Checkout website repo
